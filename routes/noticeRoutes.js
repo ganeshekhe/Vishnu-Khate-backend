@@ -1,3 +1,6 @@
+
+
+
 const express = require("express");
 const router = express.Router();
 const Notice = require("../models/Notice");
@@ -12,7 +15,7 @@ router.get("/", async (req, res) => {
   }
 });
 
-// POST new notice (for admin)
+// POST new notice
 router.post("/", async (req, res) => {
   try {
     const { title } = req.body;
@@ -24,6 +27,39 @@ router.post("/", async (req, res) => {
   }
 });
 
+// ✅ PUT update notice
+router.put("/:id", async (req, res) => {
+  try {
+    const { title } = req.body;
+    const updatedNotice = await Notice.findByIdAndUpdate(
+      req.params.id,
+      { title },
+      { new: true }
+    );
+
+    if (!updatedNotice) {
+      return res.status(404).json({ message: "Notice not found" });
+    }
+
+    res.json(updatedNotice);
+  } catch (err) {
+    res.status(500).json({ message: "Error updating notice" });
+  }
+});
+
+// ✅ DELETE notice
+router.delete("/:id", async (req, res) => {
+  try {
+    const deletedNotice = await Notice.findByIdAndDelete(req.params.id);
+
+    if (!deletedNotice) {
+      return res.status(404).json({ message: "Notice not found" });
+    }
+
+    res.json({ message: "Notice deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ message: "Error deleting notice" });
+  }
+});
+
 module.exports = router;
-
-

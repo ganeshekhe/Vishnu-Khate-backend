@@ -13,6 +13,14 @@ const profileDocSchema = new mongoose.Schema({
 }, { _id: false });
 
 const userProfileSchema = new mongoose.Schema({
+  name: {
+    type: String,
+    default: "",
+  },
+  caste: {
+    type: String,
+    default: "",
+  },
   gender: {
     type: String,
     enum: ["male", "female", "other"],
@@ -73,17 +81,7 @@ const applicationSchema = new mongoose.Schema({
     default: "Submitted",
   },
 
-  // 📄 Operator uploaded form PDF
-  // formPdfPath: {
-  //   type: String,
-  //   default: "",
-  // },
-
-  // // 🧾 Final certificate uploaded by admin
-  // certificateUrl: {
-  //   type: String,
-  //   default: "",
-  // },
+  
   formPdf: {
   filename: String,
   fileId: mongoose.Schema.Types.ObjectId,

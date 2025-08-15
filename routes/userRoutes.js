@@ -8,7 +8,7 @@ const Grid = require("gridfs-stream");
 const { verifyToken } = require("../middleware/authMiddleware");
 const User = require("../models/User");
 
-// ✅ GridFS Setup
+// GridFS Setup
 let gfs;
 const conn = mongoose.connection;
 conn.once("open", () => {
@@ -16,7 +16,7 @@ conn.once("open", () => {
   gfs.collection("uploads"); // your bucket name
 });
 
-// ✅ GridFS Storage Configuration
+// GridFS Storage Configuration
 const storage = new GridFsStorage({
   url: process.env.MONGO_URI,
   file: (req, file) => {
@@ -28,7 +28,7 @@ const storage = new GridFsStorage({
 });
 const upload = multer({ storage });
 
-// ✅ GET All Users (Admin Only)
+// GET All Users (Admin Only)
 router.get("/", verifyToken, async (req, res) => {
   if (req.user.role !== "admin")
     return res.status(403).json({ message: "Access denied" });
@@ -41,7 +41,7 @@ router.get("/", verifyToken, async (req, res) => {
   }
 });
 
-// ✅ PUT - Update User Role
+// PUT - Update User Role
 router.put("/:id/role", verifyToken, async (req, res) => {
   if (req.user.role !== "admin")
     return res.status(403).json({ message: "Access denied" });
@@ -52,7 +52,11 @@ router.put("/:id/role", verifyToken, async (req, res) => {
     return res.status(400).json({ message: "Invalid role" });
 
   try {
-    const user = await User.findByIdAndUpdate(req.params.id, { role }, { new: true, select: "-password" });
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      { role },
+      { new: true, select: "-password" }
+    );
     if (!user) return res.status(404).json({ message: "User not found" });
     res.json({ message: "Role updated", user });
   } catch (err) {
@@ -60,13 +64,13 @@ router.put("/:id/role", verifyToken, async (req, res) => {
   }
 });
 
-// ✅ PUT - Update Profile with GridFS Documents
+// PUT - Update Profile with GridFS Documents
 router.put(
   "/profile",
   verifyToken,
   upload.fields([
     { name: "profilePic", maxCount: 1 },
-    { name: "tenthCertificate", maxCount: 1 },
+    { name: "tenthCertificate", maxCount: 2 },
     { name: "tenthMarksheet", maxCount: 1 },
     { name: "twelfthCertificate", maxCount: 1 },
     { name: "twelfthMarksheet", maxCount: 1 },
@@ -121,7 +125,7 @@ router.put(
       await user.save();
 
       res.json({
-        message: "✅ Profile updated successfully",
+        message: "Profile updated successfully",
         user: {
           name: user.name,
           mobile: user.mobile,
@@ -136,17 +140,19 @@ router.put(
         },
       });
     } catch (err) {
-      console.error("❌ Profile update failed:", err);
+      console.error("Profile update failed:", err);
       res.status(500).json({ message: "Failed to update profile" });
     }
   }
 );
 
-// ✅ DELETE - Delete Single Document from User Profile + GridFS
-// ✅ DELETE - Delete Single Document from User Profile + GridFS
-router.delete("/profile/document/:fieldName", verifyToken, async (req, res) => {
-  const userId = req.user.id;
-  const fieldName = req.params.fieldName;
+// ✅ DELETE - Delete Document from User Profile by Operator/Admin
+router.delete("/profile/document/:userId/:fieldName", verifyToken, async (req, res) => {
+  const { userId, fieldName } = req.params;
+
+  if (!["admin", "operator"].includes(req.user.role)) {
+    return res.status(403).json({ message: "Access denied" });
+  }
 
   try {
     const user = await User.findById(userId);
@@ -156,7 +162,7 @@ router.delete("/profile/document/:fieldName", verifyToken, async (req, res) => {
 
     const fileId = user[fieldName].fileId;
 
-    // ✅ Delete file from GridFS (using native driver directly)
+    // Delete from GridFS
     if (fileId) {
       await conn.db.collection("uploads.files").deleteOne({
         _id: new mongoose.Types.ObjectId(fileId),
@@ -166,19 +172,17 @@ router.delete("/profile/document/:fieldName", verifyToken, async (req, res) => {
       });
     }
 
-    // ✅ Remove field from user
     user[fieldName] = undefined;
     await user.save();
 
-    res.json({ message: "✅ Document deleted", user });
+    res.json({ message: "Document deleted successfully", user });
   } catch (err) {
-    console.error("❌ Document delete failed:", err);
+    console.error("Document delete failed:", err);
     res.status(500).json({ message: "Failed to delete document", error: err.message });
   }
 });
 
-
-// ✅ GET Logged-in User Basic Info
+// GET Logged-in User Basic Info
 router.get("/me", verifyToken, async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select("name caste gender dob mobile");
@@ -189,7 +193,7 @@ router.get("/me", verifyToken, async (req, res) => {
   }
 });
 
-// ✅ GET Profile of any user (for operator/admin)
+// GET Profile of any user (for operator/admin)
 router.get("/:id/profile", verifyToken, async (req, res) => {
   try {
     const user = await User.findById(req.params.id).select(
