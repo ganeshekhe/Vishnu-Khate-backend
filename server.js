@@ -27,6 +27,14 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
+// ✅ Make io available in all routes (req.io) + also via app.get('io')
+app.set("io", io);
+app.use((req, res, next) => {
+  req.io = io;
+  next();
+});
+
+
 // ✅ Routes (Pass io to applicationRoutes)
 const authRoutes = require("./routes/authRoutes");
 const serviceRoutes = require("./routes/serviceRoutes");
@@ -36,6 +44,7 @@ const noticeRoutes = require("./routes/noticeRoutes");
 const heroRoutes = require("./routes/heroRoutes");
 const uploadRoutes = require("./routes/uploads");
 const fileRoutes = require("./routes/files");
+const categoryRoutes = require("./routes/categoryRoutes");
 
 // ✅ Use routes
 app.use("/api/auth", authRoutes);
@@ -46,6 +55,8 @@ app.use("/api/notices", noticeRoutes);
 app.use("/api/heroslides", heroRoutes);
 app.use("/api/uploads", uploadRoutes);
 app.use("/api/files", fileRoutes);
+app.use("/api/categories", categoryRoutes);
+
 
 // ✅ Test Route
 app.get("/", (req, res) => {
@@ -55,7 +66,10 @@ app.get("/", (req, res) => {
 // ✅ GridFS Setup
 let gfs;
 mongoose
-  .connect(process.env.MONGO_URI) // 🛠 Removed deprecated options
+  .connect(process.env.MONGO_URI,{ 
+    useNewUrlParser: true,
+        useUnifiedTopology: true,
+  })
   .then(() => {
     const conn = mongoose.connection;
     conn.once("open", () => {
