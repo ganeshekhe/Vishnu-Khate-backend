@@ -39,7 +39,7 @@ app.use((req, res, next) => {
 const authRoutes = require("./routes/authRoutes");
 const serviceRoutes = require("./routes/serviceRoutes");
 const userRoutes = require("./routes/userRoutes");
-const applicationRoutes = require("./routes/applicationRoutes")(io); // <-- important
+const applicationRoutes = require("./routes/applicationRoutes") 
 const noticeRoutes = require("./routes/noticeRoutes");
 const heroRoutes = require("./routes/heroRoutes");
 const uploadRoutes = require("./routes/uploads");
@@ -50,7 +50,7 @@ const categoryRoutes = require("./routes/categoryRoutes");
 app.use("/api/auth", authRoutes);
 app.use("/api/services", serviceRoutes);
 app.use("/api/users", userRoutes);
-app.use("/api/applications", applicationRoutes); // already passed io
+app.use("/api/applications", applicationRoutes);
 app.use("/api/notices", noticeRoutes);
 app.use("/api/heroslides", heroRoutes);
 app.use("/api/uploads", uploadRoutes);
