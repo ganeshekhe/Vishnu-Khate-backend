@@ -792,7 +792,96 @@ router.put("/applications/:id/uploadCertificate",
 //   }
 // });
 
-router.get("/:userId/download-all", verifyToken, async (req, res) => {
+// router.get("/:userId/download-all", verifyToken, async (req, res) => {
+//   try {
+//     if (req.user.role !== "operator")
+//       return res.status(403).json({ message: "Access denied" });
+
+//     const user = await User.findById(req.params.userId);
+//     if (!user) return res.status(404).json({ message: "User not found" });
+
+//     // GridFS setup
+//     const gfsBucket = new mongoose.mongo.GridFSBucket(mongoose.connection.db, {
+//       bucketName: "uploads",
+//     });
+
+//     // Base directory (cross-platform)
+//     const baseDir =
+//       process.platform === "win32"
+//         ? path.join(os.homedir(), "Documents", "SwambhuDownloads")
+//         : path.join("/opt/render/Documents", "SwambhuDownloads");
+
+//     // User-specific directory
+//     const userDir = path.join(
+//       baseDir,
+//       user.name.replace(/[^a-zA-Z0-9]/g, "_")
+//     );
+
+//     // Create directory if not exists
+//     if (!fs.existsSync(userDir)) fs.mkdirSync(userDir, { recursive: true });
+
+//     // List of documents
+//     const documentFields = [
+//       { field: "aadharCard", label: "Aadhaar Card" },
+//       { field: "panCard", label: "PAN Card" },
+//       { field: "tenthCertificate", label: "10th Certificate" },
+//       { field: "tenthMarksheet", label: "10th Marksheet" },
+//       { field: "twelfthCertificate", label: "12th Certificate" },
+//       { field: "twelfthMarksheet", label: "12th Marksheet" },
+//       { field: "graduationDegree", label: "Graduation Degree" },
+//       { field: "domicile", label: "Domicile Certificate" },
+//       { field: "pgCertificate", label: "PG Certificate" },
+//       { field: "casteValidity", label: "Caste Validity" },
+//       { field: "otherDocument", label: "Other Document" }, // multi-documents
+//     ];
+
+//     let downloadedCount = 0;
+
+//     // Download documents
+//     for (const { field, label } of documentFields) {
+//       const doc = user[field];
+//       if (!doc) continue;
+
+//       const docsArray = Array.isArray(doc) ? doc : [doc];
+
+//       for (let i = 0; i < docsArray.length; i++) {
+//         const fileDoc = docsArray[i];
+//         if (!fileDoc?.filename) continue;
+
+//         const ext = path.extname(fileDoc.filename);
+//         const fileNameSafe =
+//           field === "otherDocument"
+//             ? `${label}_${i + 1}${ext}`
+//             : `${label}${ext}`;
+//         const filePath = path.join(userDir, fileNameSafe);
+
+//         const readStream = gfsBucket.openDownloadStreamByName(
+//           fileDoc.filename
+//         );
+//         const writeStream = fs.createWriteStream(filePath);
+
+//         await new Promise((resolve, reject) => {
+//           readStream
+//             .on("error", reject)
+//             .pipe(writeStream)
+//             .on("finish", resolve)
+//             .on("error", reject);
+//         });
+
+//         downloadedCount++;
+//       }
+//     }
+
+//     res.json({
+//       message: `✅ Downloaded ${downloadedCount} documents to "${userDir}"`,
+//       path: userDir,
+//     });
+//   } catch (err) {
+//     console.error("❌ Download all documents failed:", err);
+//     res.status(500).json({ message: "Download failed", error: err.message });
+//   }
+// });
+ router.get("/:userId/download-all", verifyToken, async (req, res) => {
   try {
     if (req.user.role !== "operator")
       return res.status(403).json({ message: "Access denied" });
@@ -805,22 +894,17 @@ router.get("/:userId/download-all", verifyToken, async (req, res) => {
       bucketName: "uploads",
     });
 
-    // Base directory (cross-platform)
-    const baseDir =
-      process.platform === "win32"
-        ? path.join(os.homedir(), "Documents", "SwambhuDownloads")
-        : path.join("/opt/render/Documents", "SwambhuDownloads");
-
-    // User-specific directory
+    // Base folder and user folder
+    const baseDir = "D:\\dump";
     const userDir = path.join(
       baseDir,
       user.name.replace(/[^a-zA-Z0-9]/g, "_")
     );
 
-    // Create directory if not exists
+    // Create folder if it doesn't exist
     if (!fs.existsSync(userDir)) fs.mkdirSync(userDir, { recursive: true });
 
-    // List of documents
+    // List of documents to download
     const documentFields = [
       { field: "aadharCard", label: "Aadhaar Card" },
       { field: "panCard", label: "PAN Card" },
@@ -837,11 +921,12 @@ router.get("/:userId/download-all", verifyToken, async (req, res) => {
 
     let downloadedCount = 0;
 
-    // Download documents
+    // Download each document
     for (const { field, label } of documentFields) {
       const doc = user[field];
       if (!doc) continue;
 
+      // Check if field is array (like otherDocument)
       const docsArray = Array.isArray(doc) ? doc : [doc];
 
       for (let i = 0; i < docsArray.length; i++) {
@@ -849,15 +934,10 @@ router.get("/:userId/download-all", verifyToken, async (req, res) => {
         if (!fileDoc?.filename) continue;
 
         const ext = path.extname(fileDoc.filename);
-        const fileNameSafe =
-          field === "otherDocument"
-            ? `${label}_${i + 1}${ext}`
-            : `${label}${ext}`;
+        const fileNameSafe = field === "otherDocument" ? `${label}_${i + 1}${ext}` : `${label}${ext}`;
         const filePath = path.join(userDir, fileNameSafe);
 
-        const readStream = gfsBucket.openDownloadStreamByName(
-          fileDoc.filename
-        );
+        const readStream = gfsBucket.openDownloadStreamByName(fileDoc.filename);
         const writeStream = fs.createWriteStream(filePath);
 
         await new Promise((resolve, reject) => {
