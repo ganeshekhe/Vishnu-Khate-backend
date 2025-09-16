@@ -202,11 +202,24 @@ const ApplicationSchema = new mongoose.Schema(
       paymentId: { type: String, default: "" },
       signature: { type: String, default: "" },
       amount: { type: Number, default: 0 },
+      // status: {
+      //   type: String,
+      //   enum: ["Pending", "Paid", "Failed"],
+      //   default: "Pending",
+      // },
       status: {
-        type: String,
-        enum: ["Pending", "Paid", "Failed"],
-        default: "Pending",
-      },
+  type: String,
+  enum: [
+    "Submitted",
+    "In Review",
+    "Pending Confirmation",
+    "Confirmed",
+    "Rejected",
+    "Completed",
+  ],
+  default: "Submitted",
+},
+
     },
   },
   { timestamps: true }
