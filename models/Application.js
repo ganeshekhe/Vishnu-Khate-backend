@@ -207,9 +207,10 @@ const ApplicationSchema = new mongoose.Schema(
       //   enum: ["Pending", "Paid", "Failed"],
       //   default: "Pending",
       // },
-      status: {
+     status: {
   type: String,
   enum: [
+    "Draft",              // 👈 हा add कर
     "Submitted",
     "In Review",
     "Pending Confirmation",
@@ -217,8 +218,9 @@ const ApplicationSchema = new mongoose.Schema(
     "Rejected",
     "Completed",
   ],
-  default: "Submitted",
+  default: "Draft",       // 👈 default Draft ठेव
 },
+
 
     },
   },

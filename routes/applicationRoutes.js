@@ -1043,6 +1043,26 @@ router.put("/:id/update", verifyToken, async (req, res) => {
   }
 });
 
+// router.post("/draft", verifyToken, async (req, res) => {
+//   try {
+//     const { serviceId, subServiceId } = req.body;
+//     if (!serviceId) return res.status(400).json({ message: "ServiceId required" });
+
+//     const draft = new Application({
+//       user: req.user.id,
+//       service: serviceId,
+//       subService: subServiceId ? { _id: subServiceId } : null,
+//       status: "Submitted", // 👈 "Pending" काढून टाका
+//     });
+
+//     await draft.save();
+//     res.status(201).json({ message: "Draft created", application: draft });
+//   } catch (err) {
+//     console.error("❌ Draft create error:", err.message);
+//     res.status(500).json({ message: "Draft creation failed", error: err.message });
+//   }
+// });
+
 router.post("/draft", verifyToken, async (req, res) => {
   try {
     const { serviceId, subServiceId } = req.body;
@@ -1052,7 +1072,7 @@ router.post("/draft", verifyToken, async (req, res) => {
       user: req.user.id,
       service: serviceId,
       subService: subServiceId ? { _id: subServiceId } : null,
-      status: "Submitted", // 👈 "Pending" काढून टाका
+      status: "Draft",   // ✅ Draft stage
     });
 
     await draft.save();
@@ -1062,6 +1082,5 @@ router.post("/draft", verifyToken, async (req, res) => {
     res.status(500).json({ message: "Draft creation failed", error: err.message });
   }
 });
-
 
 module.exports = router;
