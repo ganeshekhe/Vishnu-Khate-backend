@@ -1043,6 +1043,23 @@ router.put("/:id/update", verifyToken, async (req, res) => {
   }
 });
 
+router.post("/draft", verifyToken, async (req, res) => {
+  try {
+    const { serviceId, subServiceId } = req.body;
 
+    const draft = new Application({
+      user: req.user.id,
+      service: serviceId,
+      subService: subServiceId ? { _id: subServiceId } : null,
+      status: "Pending", // Draft status
+    });
+
+    await draft.save();
+    res.status(201).json({ message: "Draft created", application: draft });
+  } catch (err) {
+    console.error("❌ Draft create error:", err);
+    res.status(500).json({ message: "Draft creation failed" });
+  }
+});
 
 module.exports = router;
