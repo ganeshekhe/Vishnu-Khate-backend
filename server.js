@@ -45,6 +45,7 @@ const heroRoutes = require("./routes/heroRoutes");
 const uploadRoutes = require("./routes/uploads");
 const fileRoutes = require("./routes/files");
 const categoryRoutes = require("./routes/categoryRoutes");
+const paymentRoutes = require("./routes/paymentRoutes");
 
 // ✅ Use routes
 app.use("/api/auth", authRoutes);
@@ -56,7 +57,7 @@ app.use("/api/heroslides", heroRoutes);
 app.use("/api/uploads", uploadRoutes);
 app.use("/api/files", fileRoutes);
 app.use("/api/categories", categoryRoutes);
-
+app.use("/api/payment", paymentRoutes);
 
 // ✅ Test Route
 app.get("/", (req, res) => {
