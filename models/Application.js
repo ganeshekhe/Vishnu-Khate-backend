@@ -231,7 +231,7 @@
 
 // module.exports = mongoose.model("Application", ApplicationSchema);
 
-
+const mongoose = require("mongoose");
 const ApplicationSchema = new mongoose.Schema(
   {
     user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
