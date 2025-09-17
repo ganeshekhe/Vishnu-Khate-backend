@@ -150,7 +150,87 @@
 // );
 
 // module.exports = mongoose.model("Application", ApplicationSchema);
-const mongoose = require("mongoose");
+// const mongoose = require("mongoose");
+
+// const ApplicationSchema = new mongoose.Schema(
+//   {
+//     user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+//     operator: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+//     service: { type: mongoose.Schema.Types.ObjectId, ref: "Service" },
+//     subService: { _id: String, name: String },
+//     data: { type: Object, default: {} },
+//     documents: [{ filename: String, fileId: mongoose.Schema.Types.ObjectId }],
+//     userProfile: {
+//       name: String,
+//       caste: String,
+//       gender: String,
+//       dob: Date,
+//       profileDocs: [{ filename: String, fileId: mongoose.Schema.Types.ObjectId, filepath: String }],
+//     },
+//     status: {
+//       type: String,
+//       enum: [
+//         "Draft",
+//         "Submitted",
+//         "In Review",
+//         "Pending Confirmation",
+//         "Confirmed",
+//         "Rejected",
+//         "Completed",
+//         "Pending",
+
+//       ],
+//       default: "Draft",
+//     },
+//     formPdf: {
+//       filename: String,
+//       fileId: mongoose.Schema.Types.ObjectId,
+//     },
+//     certificate: {
+//       filename: String,
+//       fileId: mongoose.Schema.Types.ObjectId,
+//     },
+//     // ✅ Add operator credentials
+//     operatorCredentials: {
+//       operatorId: { type: String, default: "" },
+//       operatorPassword: { type: String, default: "" },
+//     },
+//     rejectReason: { type: String, default: "" },
+//     correctionComment: { type: String, default: "" },
+
+//     // ✅ Razorpay Payment Info
+//     paymentInfo: {
+//       orderId: { type: String, default: "" },
+//       paymentId: { type: String, default: "" },
+//       signature: { type: String, default: "" },
+//       amount: { type: Number, default: 0 },
+//       // status: {
+//       //   type: String,
+//       //   enum: ["Pending", "Paid", "Failed"],
+//       //   default: "Pending",
+//       // },
+//      status: {
+//   type: String,
+//   enum: [
+//     "Draft",              // 👈 हा add कर
+//     "Submitted",
+//     "In Review",
+//     "Pending Confirmation",
+//     "Confirmed",
+//     "Rejected",
+//     "Completed",
+//   ],
+//   default: "Draft",       // 👈 default Draft ठेव
+// },
+
+
+//     },
+//   },
+//   { timestamps: true }
+// );
+
+// module.exports = mongoose.model("Application", ApplicationSchema);
+
 
 const ApplicationSchema = new mongoose.Schema(
   {
@@ -165,8 +245,12 @@ const ApplicationSchema = new mongoose.Schema(
       caste: String,
       gender: String,
       dob: Date,
-      profileDocs: [{ filename: String, fileId: mongoose.Schema.Types.ObjectId, filepath: String }],
+      profileDocs: [
+        { filename: String, fileId: mongoose.Schema.Types.ObjectId, filepath: String },
+      ],
     },
+
+    // ✅ Application status
     status: {
       type: String,
       enum: [
@@ -180,6 +264,7 @@ const ApplicationSchema = new mongoose.Schema(
       ],
       default: "Draft",
     },
+
     formPdf: {
       filename: String,
       fileId: mongoose.Schema.Types.ObjectId,
@@ -188,11 +273,12 @@ const ApplicationSchema = new mongoose.Schema(
       filename: String,
       fileId: mongoose.Schema.Types.ObjectId,
     },
-    // ✅ Add operator credentials
+
     operatorCredentials: {
       operatorId: { type: String, default: "" },
       operatorPassword: { type: String, default: "" },
     },
+
     rejectReason: { type: String, default: "" },
     correctionComment: { type: String, default: "" },
 
@@ -202,26 +288,11 @@ const ApplicationSchema = new mongoose.Schema(
       paymentId: { type: String, default: "" },
       signature: { type: String, default: "" },
       amount: { type: Number, default: 0 },
-      // status: {
-      //   type: String,
-      //   enum: ["Pending", "Paid", "Failed"],
-      //   default: "Pending",
-      // },
-     status: {
-  type: String,
-  enum: [
-    "Draft",              // 👈 हा add कर
-    "Submitted",
-    "In Review",
-    "Pending Confirmation",
-    "Confirmed",
-    "Rejected",
-    "Completed",
-  ],
-  default: "Draft",       // 👈 default Draft ठेव
-},
-
-
+      paymentStatus: {
+        type: String,
+        enum: ["Pending", "Paid", "Failed"],
+        default: "Pending",
+      },
     },
   },
   { timestamps: true }
