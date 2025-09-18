@@ -38,11 +38,17 @@ router.post("/create-order", verifyToken, async (req, res) => {
     const order = await razorpay.orders.create(options);
 
     // Application मध्ये draft + payment pending ठेवू
+    // await Application.findByIdAndUpdate(applicationId, {
+    //   "paymentInfo.orderId": order.id,
+    //   "paymentInfo.amount": amount,
+    //   "paymentInfo.status": "Pending",
+    // });
     await Application.findByIdAndUpdate(applicationId, {
-      "paymentInfo.orderId": order.id,
-      "paymentInfo.amount": amount,
-      "paymentInfo.status": "Pending",
-    });
+  "paymentInfo.orderId": order.id,
+  "paymentInfo.amount": amount,
+  "paymentInfo.paymentStatus": "Pending",   // ✅ correct field
+});
+
 
     res.json({ orderId: order.id, amount: order.amount, currency: order.currency });
   } catch (err) {
@@ -78,22 +84,39 @@ router.post("/verify", verifyToken, async (req, res) => {
     }
 
     // ✅ Payment verified → Application Submitted
+    // const updatedApp = await Application.findByIdAndUpdate(
+    //   applicationId,
+    //   {
+    //     status: "Submitted",
+    //     paymentInfo: {
+    //       orderId: razorpay_order_id,
+    //       paymentId: razorpay_payment_id,
+    //       signature: razorpay_signature,
+    //       amount: req.body.amount,
+    //       status: "Paid",
+    //     },
+    //   },
+    //   { new: true }
+    // )
+    //   .populate("user", "name mobile")
+    //   .populate("service", "name");
     const updatedApp = await Application.findByIdAndUpdate(
-      applicationId,
-      {
-        status: "Submitted",
-        paymentInfo: {
-          orderId: razorpay_order_id,
-          paymentId: razorpay_payment_id,
-          signature: razorpay_signature,
-          amount: req.body.amount,
-          status: "Paid",
-        },
-      },
-      { new: true }
-    )
-      .populate("user", "name mobile")
-      .populate("service", "name");
+  applicationId,
+  {
+    status: "Submitted",
+    paymentInfo: {
+      orderId: razorpay_order_id,
+      paymentId: razorpay_payment_id,
+      signature: razorpay_signature,
+      amount: req.body.amount,
+      paymentStatus: "Paid",   // ✅ correct field
+    },
+  },
+  { new: true }
+)
+  .populate("user", "name mobile")
+  .populate("service", "name");
+
 
     req.io?.emit("applicationCreated", updatedApp);
 
