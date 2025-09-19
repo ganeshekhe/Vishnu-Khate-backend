@@ -1083,9 +1083,64 @@ router.put("/:id/update", verifyToken, async (req, res) => {
 //   }
 // });
 
+// router.post("/draft", verifyToken, async (req, res) => {
+//   try {
+//     const { serviceId, subService } = req.body; // 👈 आता full object frontend वरून येतो
+//     if (!serviceId) {
+//       return res.status(400).json({ message: "ServiceId required" });
+//     }
+
+//     const draft = new Application({
+//       user: req.user.id,
+//       service: serviceId,
+//       subService: subService ? { _id: subService._id, name: subService.name } : null, // ✅ full object
+//       status: "Draft",
+//     });
+
+//     await draft.save();
+
+//     res.status(201).json({ message: "Draft created", application: draft });
+//   } catch (err) {
+//     console.error("❌ Draft create error:", err.message);
+//     res
+//       .status(500)
+//       .json({ message: "Draft creation failed", error: err.message });
+//   }
+// });
+
+// router.post("/draft", verifyToken, async (req, res) => {
+//   try {
+//     const { serviceId, subService } = req.body;
+//     if (!serviceId) {
+//       return res.status(400).json({ message: "ServiceId required" });
+//     }
+
+//     const draft = new Application({
+//       user: req.user.id,
+//       service: serviceId,
+//       subService: subService
+//         ? { _id: subService._id, name: subService.name }
+//         : null,
+//       status: "Draft",
+//     });
+
+//     await draft.save();
+
+//     // ✅ Real-time emit to all sockets
+//     req.io.emit("applicationCreated", draft);
+
+//     res.status(201).json({ message: "Draft created", application: draft });
+//   } catch (err) {
+//     console.error("❌ Draft create error:", err.message);
+//     res
+//       .status(500)
+//       .json({ message: "Draft creation failed", error: err.message });
+//   }
+// });
+
 router.post("/draft", verifyToken, async (req, res) => {
   try {
-    const { serviceId, subService } = req.body; // 👈 आता full object frontend वरून येतो
+    const { serviceId, subService } = req.body;
     if (!serviceId) {
       return res.status(400).json({ message: "ServiceId required" });
     }
@@ -1093,11 +1148,16 @@ router.post("/draft", verifyToken, async (req, res) => {
     const draft = new Application({
       user: req.user.id,
       service: serviceId,
-      subService: subService ? { _id: subService._id, name: subService.name } : null, // ✅ full object
+      subService: subService
+        ? { _id: subService._id, name: subService.name }
+        : null,
       status: "Draft",
     });
 
     await draft.save();
+
+    // ✅ Real-time emit
+    req.io.emit("applicationCreated", draft);
 
     res.status(201).json({ message: "Draft created", application: draft });
   } catch (err) {
@@ -1107,6 +1167,5 @@ router.post("/draft", verifyToken, async (req, res) => {
       .json({ message: "Draft creation failed", error: err.message });
   }
 });
-
 
 module.exports = router;
