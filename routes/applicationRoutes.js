@@ -1737,45 +1737,45 @@ router.put("/:id/update", verifyToken, async (req, res) => {
 });
 
 // ---------- Draft ----------
-router.post("/draft", verifyToken, async (req, res) => {
-  try {
-    const { serviceId, subService } = req.body;
-    if (!serviceId) {
-      return res.status(400).json({ message: "ServiceId required" });
-    }
+// router.post("/draft", verifyToken, async (req, res) => {
+//   try {
+//     const { serviceId, subService } = req.body;
+//     if (!serviceId) {
+//       return res.status(400).json({ message: "ServiceId required" });
+//     }
 
-    const draft = new Application({
-      user: req.user.id,
-      service: serviceId,
-      subService: subService
-        ? { _id: subService._id, name: subService.name }
-        : null,
-      status: "Draft",
-    });
+//     const draft = new Application({
+//       user: req.user.id,
+//       service: serviceId,
+//       subService: subService
+//         ? { _id: subService._id, name: subService.name }
+//         : null,
+//       status: "Draft",
+//     });
 
-    await draft.save();
+//     await draft.save();
 
-    const populated = await Application.findById(draft._id)
-      .populate("user", "name mobile caste dob")
-      .populate({
-        path: "service",
-        select: "name category",
-        populate: { path: "category", select: "name" },
-      })
-      .populate("subService", "name");
+//     const populated = await Application.findById(draft._id)
+//       .populate("user", "name mobile caste dob")
+//       .populate({
+//         path: "service",
+//         select: "name category",
+//         populate: { path: "category", select: "name" },
+//       })
+//       .populate("subService", "name");
 
-    req.io.emit("applicationCreated", populated);
+//     req.io.emit("applicationCreated", populated);
 
-    res
-      .status(201)
-      .json({ message: "Draft created", application: populated });
-  } catch (err) {
-    console.error("❌ Draft create error:", err.message);
-    res
-      .status(500)
-      .json({ message: "Draft creation failed", error: err.message });
-  }
-});
+//     res
+//       .status(201)
+//       .json({ message: "Draft created", application: populated });
+//   } catch (err) {
+//     console.error("❌ Draft create error:", err.message);
+//     res
+//       .status(500)
+//       .json({ message: "Draft creation failed", error: err.message });
+//   }
+// });
 
 // router.post("/draft", verifyToken, async (req, res) => {
 //   try {
@@ -1820,5 +1820,45 @@ router.post("/draft", verifyToken, async (req, res) => {
 //   }
 // });
 
+router.post("/draft", verifyToken, async (req, res) => {
+  try {
+    const { serviceId, subService } = req.body;
+    if (!serviceId) {
+      return res.status(400).json({ message: "ServiceId required" });
+    }
+
+    const draft = new Application({
+      user: req.user.id,
+      service: serviceId,
+      subService: subService
+        ? { _id: subService._id, name: subService.name }
+        : null,
+      status: "Draft",
+    });
+
+    await draft.save();
+
+    const populated = await Application.findById(draft._id)
+      .populate("user", "name mobile caste dob")
+      .populate({
+        path: "service",
+        select: "name category",
+        populate: { path: "category", select: "name" },
+      })
+      .populate("subService", "name");
+
+    // ⚡ Draft applications वेगळ्या event ने emit करा
+    req.io.emit("applicationDrafted", populated);
+
+    res
+      .status(201)
+      .json({ message: "Draft created", application: populated });
+  } catch (err) {
+    console.error("❌ Draft create error:", err.message);
+    res
+      .status(500)
+      .json({ message: "Draft creation failed", error: err.message });
+  }
+});
 
 module.exports = router;
