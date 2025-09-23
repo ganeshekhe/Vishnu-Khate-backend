@@ -308,6 +308,49 @@ router.put("/:id/confirm", verifyToken, async (req, res) => {
 });
 
 // ---------- Admin/Operator Upload Certificate ----------
+// router.put(
+//   "/:id/uploadCertificate",
+//   verifyToken,
+//   requireRole("operator", "admin"),
+//   upload.single("certificate"),
+//   async (req, res) => {
+//     try {
+//       const app = await Application.findById(req.params.id);
+//       if (!app)
+//         return res.status(404).json({ message: "Application not found" });
+
+//       if (app.status !== "Confirmed") {
+//         return res.status(400).json({
+//           message: "Certificate can only be uploaded after confirmation",
+//         });
+//       }
+
+//       app.certificate = { filename: req.file.filename, fileId: req.file.id };
+//       app.status = "Completed";
+//       await app.save();
+
+//       const populated = await Application.findById(app._id)
+//         .populate("user", "name mobile caste dob")
+//         .populate({
+//           path: "service",
+//           select: "name category",
+//           populate: { path: "category", select: "name" },
+//         })
+//         .populate("subService", "name");
+
+//       req.io.emit("applicationStatusUpdated", populated);
+//       req.io.emit("certificateUploaded", populated);
+
+//       res.json({
+//         message: "Certificate uploaded successfully",
+//         application: populated,
+//       });
+//     } catch (err) {
+//       console.error("Certificate upload failed:", err);
+//       res.status(500).json({ message: "Upload failed", error: err.message });
+//     }
+//   }
+// );
 router.put(
   "/:id/uploadCertificate",
   verifyToken,
@@ -319,16 +362,20 @@ router.put(
       if (!app)
         return res.status(404).json({ message: "Application not found" });
 
-      if (app.status !== "Confirmed") {
+      // ✅ Allow upload in Confirmed or In Review
+      if (app.status !== "Confirmed" && app.status !== "In Review") {
         return res.status(400).json({
-          message: "Certificate can only be uploaded after confirmation",
+          message:
+            "Certificate can only be uploaded after confirmation or in review",
         });
       }
 
+      // ✅ Save certificate + mark status Completed
       app.certificate = { filename: req.file.filename, fileId: req.file.id };
       app.status = "Completed";
       await app.save();
 
+      // ✅ Populate for frontend
       const populated = await Application.findById(app._id)
         .populate("user", "name mobile caste dob")
         .populate({
@@ -338,6 +385,7 @@ router.put(
         })
         .populate("subService", "name");
 
+      // 🔔 Emit realtime updates
       req.io.emit("applicationStatusUpdated", populated);
       req.io.emit("certificateUploaded", populated);
 

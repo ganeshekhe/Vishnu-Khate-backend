@@ -1,4 +1,4 @@
-// controllers/fileController.js
+
 const mongoose = require("mongoose");
 const { GridFSBucket } = require("mongodb");
 
