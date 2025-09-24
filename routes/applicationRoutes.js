@@ -856,142 +856,85 @@ router.put(
   }
 );
 
+router.get("/:userId/download-all", verifyToken, async (req, res) => {
+  try {
+    if (req.user.role !== "operator")
+      return res.status(403).json({ message: "Access denied" });
 
+    const user = await User.findById(req.params.userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
 
-// router.get("/:userId/download-all", verifyToken, async (req, res) => {
-//   try {
-//     if (req.user.role !== "operator")
-//       return res.status(403).json({ message: "Access denied" });
+    const gfsBucket = new mongoose.mongo.GridFSBucket(mongoose.connection.db, {
+      bucketName: "uploads",
+    });
 
-//     const user = await User.findById(req.params.userId);
-//     if (!user) return res.status(404).json({ message: "User not found" });
+    // Base folder (server-side) - make configurable via env if needed
+    const baseDir = "D:\\dump";
 
-//     const gfsBucket = new mongoose.mongo.GridFSBucket(mongoose.connection.db, {
-//       bucketName: "uploads",
-//     });
+    const userDir = path.join(
+      baseDir,
+      user.name.replace(/[^a-zA-Z0-9]/g, "_")
+    );
 
-//     // Base folder (server-side) - make configurable via env if needed
-//     const baseDir = "D:\\dump";
+    if (!fs.existsSync(userDir)) fs.mkdirSync(userDir, { recursive: true });
 
-//     const userDir = path.join(
-//       baseDir,
-//       user.name.replace(/[^a-zA-Z0-9]/g, "_")
-//     );
+    const documentFields = [
+      { field: "aadharCard", label: "Aadhaar Card" },
+      { field: "panCard", label: "PAN Card" },
+      { field: "tenthCertificate", label: "10th Certificate" },
+      { field: "tenthMarksheet", label: "10th Marksheet" },
+      { field: "twelfthCertificate", label: "12th Certificate" },
+      { field: "twelfthMarksheet", label: "12th Marksheet" },
+      { field: "graduationDegree", label: "Graduation Degree" },
+      { field: "domicile", label: "Domicile Certificate" },
+      { field: "pgCertificate", label: "PG Certificate" },
+      { field: "casteValidity", label: "Caste Validity" },
+      { field: "otherDocument", label: "Other Document" }, // multi-documents
+    ];
 
-//     if (!fs.existsSync(userDir)) fs.mkdirSync(userDir, { recursive: true });
+    let downloadedCount = 0;
 
-//     const documentFields = [
-//       { field: "aadharCard", label: "Aadhaar Card" },
-//       { field: "panCard", label: "PAN Card" },
-//       { field: "tenthCertificate", label: "10th Certificate" },
-//       { field: "tenthMarksheet", label: "10th Marksheet" },
-//       { field: "twelfthCertificate", label: "12th Certificate" },
-//       { field: "twelfthMarksheet", label: "12th Marksheet" },
-//       { field: "graduationDegree", label: "Graduation Degree" },
-//       { field: "domicile", label: "Domicile Certificate" },
-//       { field: "pgCertificate", label: "PG Certificate" },
-//       { field: "casteValidity", label: "Caste Validity" },
-//       { field: "otherDocument", label: "Other Document" }, // multi-documents
-//     ];
+    for (const { field, label } of documentFields) {
+      const doc = user[field];
 
-//     let downloadedCount = 0;
+      if (!doc) continue;
 
-//     for (const { field, label } of documentFields) {
-//       const doc = user[field];
+      const docsArray = Array.isArray(doc) ? doc : [doc];
 
-//       if (!doc) continue;
+      for (let i = 0; i < docsArray.length; i++) {
+        const fileDoc = docsArray[i];
+        if (!fileDoc?.filename) continue;
 
-//       const docsArray = Array.isArray(doc) ? doc : [doc];
+        const ext = path.extname(fileDoc.filename);
+        const fileNameSafe = field === "otherDocument" ? `${label}_${i + 1}${ext}` : `${label}${ext}`;
+        const filePath = path.join(userDir, fileNameSafe);
 
-//       for (let i = 0; i < docsArray.length; i++) {
-//         const fileDoc = docsArray[i];
-//         if (!fileDoc?.filename) continue;
+        const readStream = gfsBucket.openDownloadStreamByName(fileDoc.filename);
+        const writeStream = fs.createWriteStream(filePath);
 
-//         const ext = path.extname(fileDoc.filename);
-//         const fileNameSafe = field === "otherDocument" ? `${label}_${i + 1}${ext}` : `${label}${ext}`;
-//         const filePath = path.join(userDir, fileNameSafe);
+        await new Promise((resolve, reject) => {
+          readStream
+            .on("error", reject)
+            .pipe(writeStream)
+            .on("finish", resolve)
+            .on("error", reject);
+        });
 
-//         const readStream = gfsBucket.openDownloadStreamByName(fileDoc.filename);
-//         const writeStream = fs.createWriteStream(filePath);
+        downloadedCount++;
+      }
+    }
 
-//         await new Promise((resolve, reject) => {
-//           readStream
-//             .on("error", reject)
-//             .pipe(writeStream)
-//             .on("finish", resolve)
-//             .on("error", reject);
-//         });
-
-//         downloadedCount++;
-//       }
-//     }
-
-//     res.json({
-//       message: `Downloaded ${downloadedCount} documents to "${userDir}"`,
-//       path: userDir,
-//     });
-//   } catch (err) {
-//     console.error("Download all documents failed:", err);
-//     res.status(500).json({ message: "Download failed", error: err.message });
-//   }
-// });
+    res.json({
+      message: `Downloaded ${downloadedCount} documents to "${userDir}"`,
+      path: userDir,
+    });
+  } catch (err) {
+    console.error("Download all documents failed:", err);
+    res.status(500).json({ message: "Download failed", error: err.message });
+  }
+});
 
 // ---------- User Confirm ----------
-router.get("/:userId/download-all", verifyToken, async (req, res) => {
-    try {
-      if (req.user.role !== "operator") return res.status(403).json({ message: "Access denied" });
-
-      const gfsBucket = new mongoose.mongo.GridFSBucket(mongoose.connection.db, {
-        bucketName: "uploads",
-      });
-
-      const user = await User.findById(req.params.userId);
-      if (!user) return res.status(404).json({ message: "User not found" });
-
-      const baseDir = "D:\\dump";
-      const userDir = path.join(baseDir, user.name.replace(/[^a-zA-Z0-9]/g, "_"));
-      if (!fs.existsSync(userDir)) fs.mkdirSync(userDir, { recursive: true });
-
-      const documentFields = [
-        { field: "aadharCard", label: "Aadhaar Card" },
-        { field: "panCard", label: "PAN Card" },
-        { field: "tenthCertificate", label: "10th Certificate" },
-        { field: "tenthMarksheet", label: "10th Marksheet" },
-        { field: "twelfthCertificate", label: "12th Certificate" },
-        { field: "twelfthMarksheet", label: "12th Marksheet" },
-        { field: "graduationDegree", label: "Graduation Degree" },
-        { field: "domicile", label: "Domicile Certificate" },
-        { field: "pgCertificate", label: "PG Certificate" },
-        { field: "casteValidity", label: "Caste Validity" },
-        { field: "otherDocument", label: "Other Document" },
-      ];
-
-      let downloadedCount = 0;
-
-      for (const { field, label } of documentFields) {
-        const doc = user[field];
-        if (doc?.filename) {
-          const filePath = path.join(userDir, `${label}${path.extname(doc.filename)}`);
-          const readStream = gfsBucket.openDownloadStreamByName(doc.filename);
-          const writeStream = fs.createWriteStream(filePath);
-
-          await new Promise((resolve) =>
-            readStream
-              .on("error", resolve)
-              .pipe(writeStream)
-              .on("finish", resolve)
-              .on("error", resolve)
-          );
-          downloadedCount++;
-        }
-      }
-
-      res.json({ message: `Downloaded ${downloadedCount} documents to ${userDir}`, path: userDir });
-    } catch (err) {
-      res.status(500).json({ message: "Download failed", error: err.message });
-    }
-  });
-
 router.put("/:id/confirm", verifyToken, async (req, res) => {
   try {
     if (req.user.role !== "user")
